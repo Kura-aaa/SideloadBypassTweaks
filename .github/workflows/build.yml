@@ -8,10 +8,6 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    env:
-      THEOS: $HOME/theos
-      TARGET: iphone:clang:latest:18.0
-      ARCHS: arm64e
 
     steps:
       - name: Checkout code
@@ -24,11 +20,12 @@ jobs:
 
       - name: Install Theos
         run: |
-          git clone --depth=1 https://github.com/theos/theos.git "$THEOS"
+          git clone --depth=1 https://github.com/theos/theos.git $HOME/theos
 
       - name: Build v1.1 (Logos)
         working-directory: ./SideloadBypass1.1
         run: |
+          export THEOS=$HOME/theos
           make clean package
           mkdir -p ../artifacts
           cp .theos/obj/debug/SideloadBypass1.dylib ../artifacts/
@@ -36,6 +33,7 @@ jobs:
       - name: Build v2.1 (CaptainHook)
         working-directory: ./SideloadBypass2.1
         run: |
+          export THEOS=$HOME/theos
           make clean package
           cp .theos/obj/debug/SideloadBypass2.dylib ../artifacts/
 
