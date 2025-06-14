@@ -44,8 +44,8 @@ jobs:
         cd artifacts
         zip -r SideloadBypass_artifacts.zip SideloadBypass1.dylib SideloadBypass2.dylib
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+    - name: Upload compiled dylibs
+      uses: actions/upload-artifact@v4
       with:
         name: SideloadBypass-dylibs
         path: artifacts/SideloadBypass_artifacts.zip
