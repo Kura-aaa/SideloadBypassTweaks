@@ -1,10 +1,15 @@
+#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 #import <CaptainHook/CaptainHook.h>
-#import <objc/runtime.h>
-#import <sys/stat.h>
+#import <substrate.h>    // for MSHookFunction
+#import <string.h>       // for strstr
+#import <errno.h>        // for errno, ENOENT
+#import <sys/stat.h>     // for struct stat
 
+// ----- SCUser Hook -----
 CHDeclareClass(SCUser);
 
-CHMethod(0, BOOL, SCUser, isSubscriptionGranted) {
+CHOptimizedMethod0(self, BOOL, SCUser, isSubscriptionGranted) {
     @try {
         NSLog(@"[Bypass v2.1] Granting premium access");
         return YES;
@@ -15,14 +20,15 @@ CHMethod(0, BOOL, SCUser, isSubscriptionGranted) {
 }
 
 CHConstructor {
-    CHLoadClass(SCUser);
+    CHLoadLateClass(SCUser);
     CHHook(0, SCUser, isSubscriptionGranted);
 }
 
-// Anti-detection: stat override
-int (*orig_stat)(const char *, struct stat *);
-int stat(const char *path, struct stat *buf) {
-    if (strstr(path, "Cydia") || strstr(path, "Substrate")) {
+// ----- stat() bypass for jailbreak detection -----
+static int (*orig_stat)(const char *path, struct stat *buf);
+
+static int replaced_stat(const char *path, struct stat *buf) {
+    if (strstr(path, "Cydia.app") || strstr(path, "MobileSubstrate")) {
         NSLog(@"[Bypass v2.1] Hiding jailbreak traces from %s", path);
         errno = ENOENT;
         return -1;
@@ -30,6 +36,11 @@ int stat(const char *path, struct stat *buf) {
     return orig_stat(path, buf);
 }
 
-__attribute__((constructor)) static void init() {
-    rebind_symbols((struct rebinding[1]){{"stat", stat, (void *)&orig_stat}}, 1);
+__attribute__((constructor))
+static void install_stat_hook() {
+    // Locate the real stat() symbol in libSystem
+    void *handle = dlopen("/usr/lib/libSystem.B.dylib", RTLD_NOW);
+    orig_stat = dlsym(handle, "stat");
+    // Hook it
+    MSHookFunction((void *)orig_stat, (void *)replaced_stat, (void **)&orig_stat);
 }
