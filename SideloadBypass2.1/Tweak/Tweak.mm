@@ -2,9 +2,10 @@
 #import <UIKit/UIKit.h>
 #import <CaptainHook/CaptainHook.h>
 #import <substrate.h>    // for MSHookFunction
+#import <sys/stat.h>     // for struct stat
 #import <string.h>       // for strstr
 #import <errno.h>        // for errno, ENOENT
-#import <sys/stat.h>     // for struct stat
+#import <dlfcn.h>        // for dlopen, dlsym, RTLD_NOW
 
 // ----- SCUser Hook -----
 CHDeclareClass(SCUser);
@@ -38,9 +39,9 @@ static int replaced_stat(const char *path, struct stat *buf) {
 
 __attribute__((constructor))
 static void install_stat_hook() {
-    // Locate the real stat() symbol in libSystem
+    // Open libSystem to locate the real stat() symbol
     void *handle = dlopen("/usr/lib/libSystem.B.dylib", RTLD_NOW);
-    orig_stat = dlsym(handle, "stat");
-    // Hook it
+    orig_stat = (int (*)(const char *, struct stat *))dlsym(handle, "stat");
+    // Hook stat()
     MSHookFunction((void *)orig_stat, (void *)replaced_stat, (void **)&orig_stat);
 }
