@@ -18,9 +18,12 @@ jobs:
           brew update
           brew install ldid wget
 
-      - name: Install Theos
+      - name: Install Theos & update SDKs
         run: |
           git clone --depth=1 https://github.com/theos/theos.git $HOME/theos
+          export THEOS=$HOME/theos
+          # This pulls down the vendor toolchains & headers
+          $THEOS/bin/update-theos --shallow
 
       - name: Build v1.1 (Logos, dylib only)
         working-directory: ./SideloadBypass1.1
