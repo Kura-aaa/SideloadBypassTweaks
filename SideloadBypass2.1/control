@@ -1,0 +1,9 @@
+Package: com.yourname.sideloadbypass
+Name: SideloadBypass
+Depends: mobilesubstrate
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: Premium bypass tweak for sideloaded apps
+Maintainer: Your Name
+Author: Your Name
+Section: Tweaks
